@@ -113,20 +113,10 @@ You can customize the look and feel of the application by modifying the HTML and
 
 This tool is designed for local use and testing. It does not include authentication or encryption features. Do not use it to send sensitive data or deploy it on a public server without implementing proper security measures.
 
-## Contributing
+### About me
 
-Contributions to the Simple API Tester are welcome. Please feel free to submit a Pull Request.
+My passions lie in Network Engineering, Cloud Computing, Automation, and impacting people's lives. I'm fortunate to weave all these elements together in my role as a Developer Advocate. On GitHub, I share my ongoing learning journey and the projects I'm building. Don't hesitate to reach out for a friendly hello or to ask any questions!
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Flask for the web framework
-- Bootstrap for the UI components
-- Requests library for handling HTTP requests
-
-## Support
-
-If you encounter any problems or have suggestions, please open an issue on the GitHub repository.
+My hangouts:
+- [LinkedIn](https://www.linkedin.com/in/duanlightfoot/)
+- [YouTube](https://www.youtube.com/@LabEveryday)
