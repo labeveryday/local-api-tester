@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
 ## To test your app
 
-Certainly! Here are a few free, public APIs you can use to test your new API calling tool:
+Here are a few free, public APIs you can use to test the API calling tool:
 
 1. JSONPlaceholder - A fake online REST API for testing and prototyping
    - GET request: https://jsonplaceholder.typicode.com/posts/1
@@ -83,10 +83,10 @@ Certainly! Here are a few free, public APIs you can use to test your new API cal
    - GET request: https://dog.ceo/api/breeds/image/random
 
 5. Pokemon API - Information about Pokemon
-   - GET request: https://pokeapi.co/api/v2/pokemon/ditto
+   - GET request: `https://pokeapi.co/api/v2/pokemon/ditto`
 
 6. REST Countries - Information about countries
-   - GET request: https://restcountries.com/v3.1/name/united
+   - GET request: `https://restcountries.com/v3.1/name/united`
 
 7. NASA API - Various NASA data, including Astronomy Picture of the Day
    - GET request: https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY
