@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Tester</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">API Tester</h1>
+        <form id="api-form">
+            <div class="mb-3">
+                <label for="url" class="form-label">URL</label>
+                <input type="text" class="form-control" id="url" required>
+            </div>
+            <div class="mb-3">
+                <label for="method" class="form-label">Method</label>
+                <select class="form-select" id="method">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="headers" class="form-label">Headers (JSON)</label>
+                <textarea class="form-control" id="headers" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="body" class="form-label">Body</label>
+                <textarea class="form-control" id="body" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Send Request</button>
+        </form>
+        <div id="response" class="mt-5">
+            <h2>Response</h2>
+            <pre id="response-content"></pre>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('#api-form').submit(function(e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '/make_request',
+                    method: 'POST',
+                    data: {
+                        url: $('#url').val(),
+                        method: $('#method').val(),
+                        headers: $('#headers').val(),
+                        body: $('#body').val()
+                    },
+                    success: function(response) {
+                        $('#response-content').text(JSON.stringify(response, null, 2));
+                    },
+                    error: function(xhr, status, error) {
+                        $('#response-content').text('Error: ' + error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
