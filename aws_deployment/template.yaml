@@ -1,0 +1,156 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: API Tester App with S3 and API Gateway Integration
+
+Resources:
+  # Lambda Function for the API
+  ApiTesterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: app/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      MemorySize: 128
+      Timeout: 30
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Environment:
+        Variables:
+          FLASK_ENV: production
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            RestApiId: !Ref ApiGateway
+
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: ApiTesterGateway
+      StageName: Prod
+      EndpointConfiguration: REGIONAL
+      AccessLogSetting:
+        DestinationArn: !GetAtt ApiGatewayLogGroup.Arn
+        Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","caller":"$context.identity.caller","user":"$context.identity.user","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","path":"$context.path","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}'
+      Throttle:
+        BurstLimit: 10  # Max requests per second burst
+        RateLimit: 5    # Steady-state requests per second
+  
+  ApiGatewayLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/apigateway/${AWS::StackName}"
+      RetentionInDays: 14  # Adjust retention as needed
+
+  # S3 Bucket for Hosting Static Files
+  StaticFilesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-static-files"
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+
+  # CloudFront Distribution
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          # S3 Origin for Static Files
+          - Id: S3Origin
+            DomainName: !GetAtt StaticFilesBucket.WebsiteURL
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+          # API Gateway Origin for API Requests
+          - Id: ApiGatewayOrigin
+            DomainName: !Sub "${ApiTesterFunction.ApiId}.execute-api.${AWS::Region}.amazonaws.com"
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+        CacheBehaviors:
+          # API Gateway Cache Behavior (for API requests)
+          - PathPattern: /api/*
+            TargetOriginId: ApiGatewayOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Cookies:
+                Forward: all
+        Enabled: true
+        DefaultRootObject: index.html
+        WebACLId: !Ref WebAcl
+
+  # WAF for CloudFront
+  WebAcl:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: ApiTesterAcl
+      Scope: CLOUDFRONT
+      DefaultAction:
+        Allow: {}
+      Rules:
+        - Name: RateLimitRule
+          Priority: 1
+          Action:
+            Block: {}
+          Statement:
+            RateBasedStatement:
+              Limit: 50 # Limit to 50 requests per minute
+              AggregateKeyType: IP
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: RateLimitRule
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: ApiTesterAcl
+  
+  ApiRequestAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: ApiRequestSpike
+      MetricName: Count
+      Namespace: AWS/ApiGateway
+      Statistic: Sum
+      Period: 60
+      Threshold: 100  # Threshold for unusual requests
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: ApiName
+          Value: ApiTesterGateway
+      EvaluationPeriods: 1
+      AlarmActions:
+        - !Ref AlarmSnsTopic
+
+  AlarmSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: ApiTesterAlerts
+
+Outputs:
+  WebsiteURL:
+    Value: !Sub "https://${CloudFrontDistribution.DomainName}"
+    Description: URL for your app's CloudFront distribution

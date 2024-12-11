@@ -14,7 +14,7 @@
         <form id="api-form">
             <div class="mb-3">
                 <label for="url" class="form-label">URL</label>
-                <input type="text" class="form-control" id="url" required>
+                <input type="text" class="form-control" id="url" placeholder="Enter API URL" required>
             </div>
             <div class="mb-3">
                 <label for="method" class="form-label">Method</label>
@@ -27,23 +27,26 @@
             </div>
             <div class="mb-3">
                 <label for="headers" class="form-label">Headers (JSON)</label>
-                <textarea class="form-control" id="headers" rows="3"></textarea>
+                <textarea class="form-control" id="headers" rows="3" placeholder='{"Content-Type": "application/json"}'></textarea>
             </div>
             <div class="mb-3">
                 <label for="body" class="form-label">Body</label>
-                <textarea class="form-control" id="body" rows="3"></textarea>
+                <textarea class="form-control" id="body" rows="3" placeholder="Enter request body (for POST/PUT)"></textarea>
             </div>
             <button type="submit" class="btn btn-primary">Send Request</button>
         </form>
         <div id="response" class="mt-5">
             <h2>Response</h2>
-            <pre id="response-content"></pre>
+            <button id="copy-response" class="btn btn-secondary mb-3">Copy Response</button>
+            <pre id="response-content" class="p-3 bg-light border rounded" style="white-space: pre-wrap;"></pre>
         </div>
     </div>
     <script>
         $(document).ready(function() {
+            // Handle form submission
             $('#api-form').submit(function(e) {
                 e.preventDefault();
+                $('#response-content').text('Loading...');
                 $.ajax({
                     url: '/make_request',
                     method: 'POST',
@@ -54,12 +57,21 @@
                         body: $('#body').val()
                     },
                     success: function(response) {
+                        // Format the response JSON nicely and display it
                         $('#response-content').text(JSON.stringify(response, null, 2));
                     },
                     error: function(xhr, status, error) {
                         $('#response-content').text('Error: ' + error);
                     }
                 });
+            });
+
+            // Copy response content to clipboard
+            $('#copy-response').click(function() {
+                const responseContent = $('#response-content').text();
+                navigator.clipboard.writeText(responseContent)
+                    .then(() => alert('Response copied to clipboard!'))
+                    .catch(err => alert('Failed to copy: ' + err));
             });
         });
     </script>
