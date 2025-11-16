@@ -3,77 +3,846 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Tester</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>API Tester Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            margin-top: 60px;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .request-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            background: white;
+        }
+        .sidebar {
+            width: 350px;
+            background: #f8f9fa;
+            border-left: 1px solid #dee2e6;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        .method-badge {
+            display: inline-block;
+            width: 70px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .method-GET { background-color: #28a745; }
+        .method-POST { background-color: #007bff; }
+        .method-PUT { background-color: #ffc107; color: #000; }
+        .method-DELETE { background-color: #dc3545; }
+        .history-item, .collection-item {
+            cursor: pointer;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+        .history-item:hover, .collection-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+            transform: translateY(-1px);
+        }
+        .env-selector {
+            background: #e7f3ff;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #b3d9ff;
+        }
+        .response-container {
+            background: #1e1e1e;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1.5rem;
+        }
+        .status-badge {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+        .status-2xx { background-color: #28a745; }
+        .status-3xx { background-color: #17a2b8; }
+        .status-4xx { background-color: #ffc107; color: #000; }
+        .status-5xx { background-color: #dc3545; }
+        .response-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+        }
+        .auth-tabs .nav-link {
+            color: #495057;
+            border: 1px solid transparent;
+        }
+        .auth-tabs .nav-link.active {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        pre code {
+            border-radius: 0.5rem;
+        }
+        .hljs {
+            background: #1e1e1e !important;
+            padding: 1rem !important;
+            border-radius: 0.5rem !important;
+        }
+        .env-var-tag {
+            background: #e7f3ff;
+            color: #004085;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+        }
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+        }
+        .tab-content {
+            padding: 1rem 0;
+        }
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+        }
+        .sidebar-section h6 {
+            font-weight: 700;
+            color: #495057;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #6c757d;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="mb-4">API Tester</h1>
-        <form id="api-form">
-            <div class="mb-3">
-                <label for="url" class="form-label">URL</label>
-                <input type="text" class="form-control" id="url" placeholder="Enter API URL" required>
+    <nav class="navbar navbar-dark fixed-top">
+        <div class="container-fluid">
+            <span class="navbar-brand">
+                <i class="fas fa-rocket"></i> API Tester Pro
+            </span>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#envModal">
+                    <i class="fas fa-cog"></i> Environments
+                </button>
             </div>
-            <div class="mb-3">
-                <label for="method" class="form-label">Method</label>
-                <select class="form-select" id="method">
-                    <option value="GET">GET</option>
-                    <option value="POST">POST</option>
-                    <option value="PUT">PUT</option>
-                    <option value="DELETE">DELETE</option>
-                </select>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Request Panel -->
+        <div class="request-panel">
+            <!-- Environment Selector -->
+            <div class="env-selector">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted d-block mb-1">Active Environment</small>
+                        <select class="form-select form-select-sm" id="envSelector" style="max-width: 200px;">
+                            <option value="">No Environment</option>
+                        </select>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> Use <span class="env-var-tag">{{variable}}</span> in your requests
+                    </small>
+                </div>
             </div>
-            <div class="mb-3">
-                <label for="headers" class="form-label">Headers (JSON)</label>
-                <textarea class="form-control" id="headers" rows="3" placeholder='{"Content-Type": "application/json"}'></textarea>
+
+            <h4 class="mb-3">Request Builder</h4>
+
+            <!-- URL and Method -->
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <label for="url" class="form-label">URL</label>
+                    <input type="text" class="form-control" id="url" placeholder="https://api.example.com/endpoint or http://localhost:3000/api">
+                </div>
+                <div class="col-md-4">
+                    <label for="method" class="form-label">Method</label>
+                    <select class="form-select" id="method">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                        <option value="PATCH">PATCH</option>
+                    </select>
+                </div>
             </div>
+
+            <!-- Authentication -->
             <div class="mb-3">
-                <label for="body" class="form-label">Body</label>
-                <textarea class="form-control" id="body" rows="3" placeholder="Enter request body (for POST/PUT)"></textarea>
+                <label class="form-label">Authentication</label>
+                <ul class="nav nav-tabs auth-tabs" id="authTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="none-tab" data-bs-toggle="tab" data-bs-target="#none" type="button">None</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="bearer-tab" data-bs-toggle="tab" data-bs-target="#bearer" type="button">Bearer Token</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button">Basic Auth</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="apikey-tab" data-bs-toggle="tab" data-bs-target="#apikey" type="button">API Key</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="authTabContent">
+                    <div class="tab-pane fade show active" id="none" role="tabpanel">
+                        <p class="text-muted mb-0"><small>No authentication will be added to this request</small></p>
+                    </div>
+                    <div class="tab-pane fade" id="bearer" role="tabpanel">
+                        <input type="text" class="form-control" id="bearerToken" placeholder="Enter your bearer token (JWT, Cognito token, etc.)">
+                    </div>
+                    <div class="tab-pane fade" id="basic" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" id="basicUsername" placeholder="Username">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="password" class="form-control" id="basicPassword" placeholder="Password">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="apikey" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="apiKeyHeader" placeholder="Header name" value="x-api-key">
+                            </div>
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" id="apiKeyValue" placeholder="API key value">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">Send Request</button>
-        </form>
-        <div id="response" class="mt-5">
-            <h2>Response</h2>
-            <button id="copy-response" class="btn btn-secondary mb-3">Copy Response</button>
-            <pre id="response-content" class="p-3 bg-light border rounded" style="white-space: pre-wrap;"></pre>
+
+            <!-- Headers -->
+            <div class="mb-3">
+                <label for="headers" class="form-label">Custom Headers (JSON)</label>
+                <textarea class="form-control font-monospace" id="headers" rows="3" placeholder='{"Content-Type": "application/json"}'></textarea>
+            </div>
+
+            <!-- Body -->
+            <div class="mb-3">
+                <label for="body" class="form-label">Request Body</label>
+                <textarea class="form-control font-monospace" id="body" rows="5" placeholder='{"key": "value"}'></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-gradient btn-lg" id="sendBtn">
+                    <i class="fas fa-paper-plane"></i> Send Request
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="saveBtn">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="clearBtn">
+                    <i class="fas fa-eraser"></i> Clear
+                </button>
+            </div>
+
+            <!-- Response Section -->
+            <div id="responseSection" style="display: none;">
+                <h4 class="mt-4 mb-3">Response</h4>
+                <div class="response-meta">
+                    <div>
+                        <span class="status-badge" id="statusBadge">200 OK</span>
+                    </div>
+                    <div class="text-end">
+                        <div><strong>Time:</strong> <span id="responseTime">0ms</span></div>
+                        <div><small class="text-muted">Size: <span id="responseSize">0 B</span></small></div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mb-2">
+                    <button class="btn btn-sm btn-outline-secondary" id="copyResponseBtn">
+                        <i class="fas fa-copy"></i> Copy Response
+                    </button>
+                </div>
+                <div class="response-container">
+                    <pre><code class="language-json" id="responseContent"></code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- History Section -->
+            <div class="sidebar-section">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">History</h6>
+                    <button class="btn btn-sm btn-link text-danger p-0" id="clearHistoryBtn">Clear</button>
+                </div>
+                <div id="historyList">
+                    <div class="empty-state">
+                        <i class="fas fa-clock"></i>
+                        <p class="mb-0">No history yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collections Section -->
+            <div class="sidebar-section">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Saved Requests</h6>
+                    <button class="btn btn-sm btn-link text-danger p-0" id="clearCollectionsBtn">Clear</button>
+                </div>
+                <div id="collectionsList">
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <p class="mb-0">No saved requests</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Environment Modal -->
+    <div class="modal fade" id="envModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Manage Environments</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Environment Name</label>
+                        <input type="text" class="form-control" id="envName" placeholder="e.g., Local Dev, AWS Prod">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Variables (JSON)</label>
+                        <textarea class="form-control font-monospace" id="envVars" rows="8" placeholder='{"BASE_URL": "http://localhost:3000", "API_KEY": "your-key"}'></textarea>
+                        <small class="text-muted">Define variables as JSON key-value pairs</small>
+                    </div>
+                    <button class="btn btn-primary" id="saveEnvBtn">
+                        <i class="fas fa-plus"></i> Add Environment
+                    </button>
+                </div>
+                <div class="modal-body border-top">
+                    <h6>Saved Environments</h6>
+                    <div id="envList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Request Modal -->
+    <div class="modal fade" id="saveModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Save Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Request Name</label>
+                        <input type="text" class="form-control" id="requestName" placeholder="e.g., Get User Profile">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmSaveBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
     <script>
-        $(document).ready(function() {
-            // Handle form submission
-            $('#api-form').submit(function(e) {
-                e.preventDefault();
-                $('#response-content').text('Loading...');
-                $.ajax({
-                    url: '/make_request',
-                    method: 'POST',
-                    data: {
-                        url: $('#url').val(),
-                        method: $('#method').val(),
-                        headers: $('#headers').val(),
-                        body: $('#body').val()
-                    },
-                    success: function(response) {
-                        // Format the response JSON nicely and display it
-                        $('#response-content').text(JSON.stringify(response, null, 2));
-                    },
-                    error: function(xhr, status, error) {
-                        $('#response-content').text('Error: ' + error);
-                    }
-                });
+        {% raw %}
+        // Storage keys
+        const STORAGE_KEYS = {
+            history: 'api_tester_history',
+            collections: 'api_tester_collections',
+            environments: 'api_tester_environments'
+        };
+
+        // Get data from localStorage
+        function getStorageData(key) {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : [];
+        }
+
+        // Save data to localStorage
+        function setStorageData(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        // Replace environment variables in text
+        function replaceEnvVars(text) {
+            if (!text) return text;
+
+            const envName = $('#envSelector').val();
+            console.log('replaceEnvVars called - envName:', envName, 'text:', text);
+
+            if (!envName || envName === '' || envName === 'No Environment') {
+                console.log('No environment selected, returning unchanged');
+                return text;
+            }
+
+            const environments = getStorageData(STORAGE_KEYS.environments);
+            console.log('Found environments:', environments);
+
+            const env = environments.find(e => e.name === envName);
+            console.log('Found env:', env);
+
+            if (!env) {
+                console.warn('Environment not found:', envName);
+                return text;
+            }
+
+            let result = text;
+            console.log('env.variables:', env.variables);
+            for (const [key, value] of Object.entries(env.variables)) {
+                const openBraces = String.fromCharCode(123, 123); // {{
+                const closeBraces = String.fromCharCode(125, 125); // }}
+                const pattern = openBraces + key + closeBraces;
+                console.log('Replacing pattern:', pattern, 'with value:', value);
+                result = result.split(pattern).join(value);
+            }
+            console.log('Final result:', result);
+            return result;
+        }
+
+        // Get current request data
+        function getCurrentRequest() {
+            const activeAuthTab = $('.auth-tabs .nav-link.active').attr('data-bs-target');
+            let headers = {};
+
+            // Parse custom headers
+            const customHeaders = $('#headers').val().trim();
+            if (customHeaders) {
+                try {
+                    headers = JSON.parse(replaceEnvVars(customHeaders));
+                } catch (e) {
+                    console.error('Invalid headers JSON');
+                }
+            }
+
+            // Add authentication headers
+            if (activeAuthTab === '#bearer') {
+                const token = replaceEnvVars($('#bearerToken').val().trim());
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+            } else if (activeAuthTab === '#basic') {
+                const username = replaceEnvVars($('#basicUsername').val().trim());
+                const password = replaceEnvVars($('#basicPassword').val().trim());
+                if (username && password) {
+                    headers['Authorization'] = 'Basic ' + btoa(username + ':' + password);
+                }
+            } else if (activeAuthTab === '#apikey') {
+                const headerName = $('#apiKeyHeader').val().trim() || 'x-api-key';
+                const value = replaceEnvVars($('#apiKeyValue').val().trim());
+                if (value) headers[headerName] = value;
+            }
+
+            return {
+                url: replaceEnvVars($('#url').val().trim()),
+                method: $('#method').val(),
+                headers: headers,
+                body: replaceEnvVars($('#body').val().trim()),
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        // Load request into form
+        function loadRequest(request) {
+            $('#url').val(request.url);
+            $('#method').val(request.method);
+            $('#body').val(request.body);
+
+            // Clear auth fields
+            $('#bearerToken').val('');
+            $('#basicUsername').val('');
+            $('#basicPassword').val('');
+            $('#apiKeyValue').val('');
+
+            // Extract auth from headers if present
+            let customHeaders = {...request.headers};
+            if (customHeaders['Authorization']) {
+                const authValue = customHeaders['Authorization'];
+                if (authValue.startsWith('Bearer ')) {
+                    $('#bearer-tab').tab('show');
+                    $('#bearerToken').val(authValue.substring(7));
+                    delete customHeaders['Authorization'];
+                } else if (authValue.startsWith('Basic ')) {
+                    $('#basic-tab').tab('show');
+                    const decoded = atob(authValue.substring(6));
+                    const [username, password] = decoded.split(':');
+                    $('#basicUsername').val(username);
+                    $('#basicPassword').val(password);
+                    delete customHeaders['Authorization'];
+                }
+            }
+
+            // Check for API key
+            const apiKeyHeaders = ['x-api-key', 'X-API-Key', 'api-key'];
+            for (const header of apiKeyHeaders) {
+                if (customHeaders[header]) {
+                    $('#apikey-tab').tab('show');
+                    $('#apiKeyHeader').val(header);
+                    $('#apiKeyValue').val(customHeaders[header]);
+                    delete customHeaders[header];
+                    break;
+                }
+            }
+
+            // Set remaining headers
+            if (Object.keys(customHeaders).length > 0) {
+                $('#headers').val(JSON.stringify(customHeaders, null, 2));
+            } else {
+                $('#headers').val('');
+            }
+        }
+
+        // Render history
+        function renderHistory() {
+            const history = getStorageData(STORAGE_KEYS.history);
+            const $list = $('#historyList');
+
+            if (history.length === 0) {
+                $list.html(`
+                    <div class="empty-state">
+                        <i class="fas fa-clock"></i>
+                        <p class="mb-0">No history yet</p>
+                    </div>
+                `);
+                return;
+            }
+
+            $list.html(history.slice(0, 20).map((item, index) => `
+                <div class="history-item" data-index="${index}">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <span class="badge method-${item.method} method-badge">${item.method}</span>
+                        <small class="text-muted">${new Date(item.timestamp).toLocaleTimeString()}</small>
+                    </div>
+                    <div class="small text-truncate">${item.url}</div>
+                </div>
+            `).join(''));
+
+            $('.history-item').on('click', function() {
+                const index = $(this).data('index');
+                loadRequest(history[index]);
+            });
+        }
+
+        // Render collections
+        function renderCollections() {
+            const collections = getStorageData(STORAGE_KEYS.collections);
+            const $list = $('#collectionsList');
+
+            if (collections.length === 0) {
+                $list.html(`
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <p class="mb-0">No saved requests</p>
+                    </div>
+                `);
+                return;
+            }
+
+            $list.html(collections.map((item, index) => `
+                <div class="collection-item" data-index="${index}">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <strong class="small">${item.name}</strong>
+                        <button class="btn btn-sm btn-link text-danger p-0 delete-collection" data-index="${index}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge method-${item.request.method} method-badge">${item.request.method}</span>
+                        <div class="small text-truncate">${item.request.url}</div>
+                    </div>
+                </div>
+            `).join(''));
+
+            $('.collection-item').on('click', function(e) {
+                if (!$(e.target).closest('.delete-collection').length) {
+                    const index = $(this).data('index');
+                    loadRequest(collections[index].request);
+                }
             });
 
-            // Copy response content to clipboard
-            $('#copy-response').click(function() {
-                const responseContent = $('#response-content').text();
-                navigator.clipboard.writeText(responseContent)
-                    .then(() => alert('Response copied to clipboard!'))
-                    .catch(err => alert('Failed to copy: ' + err));
+            $('.delete-collection').on('click', function(e) {
+                e.stopPropagation();
+                const index = $(this).data('index');
+                collections.splice(index, 1);
+                setStorageData(STORAGE_KEYS.collections, collections);
+                renderCollections();
+            });
+        }
+
+        // Render environments
+        function renderEnvironments() {
+            const environments = getStorageData(STORAGE_KEYS.environments);
+            const $selector = $('#envSelector');
+            const $list = $('#envList');
+
+            // Update selector
+            const currentVal = $selector.val();
+            $selector.html('<option value="">No Environment</option>' +
+                environments.map(env => `<option value="${env.name}">${env.name}</option>`).join(''));
+            $selector.val(currentVal);
+
+            // Update list
+            if (environments.length === 0) {
+                $list.html('<p class="text-muted">No environments saved</p>');
+                return;
+            }
+
+            $list.html(environments.map((env, index) => `
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="card-title mb-2">${env.name}</h6>
+                            <button class="btn btn-sm btn-link text-danger p-0 delete-env" data-index="${index}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                        <pre class="mb-0 small"><code class="language-json">${JSON.stringify(env.variables, null, 2)}</code></pre>
+                    </div>
+                </div>
+            `).join(''));
+
+            // Highlight code
+            $list.find('pre code').each(function(i, block) {
+                hljs.highlightElement(block);
+            });
+
+            $('.delete-env').on('click', function() {
+                const index = $(this).data('index');
+                environments.splice(index, 1);
+                setStorageData(STORAGE_KEYS.environments, environments);
+                renderEnvironments();
+            });
+        }
+
+        // Format bytes
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Display response
+        function displayResponse(response, responseTime) {
+            $('#responseSection').show();
+
+            // Status
+            const statusClass = Math.floor(response.status_code / 100);
+            $('#statusBadge')
+                .text(`${response.status_code} ${response.status_code === 200 ? 'OK' : ''}`)
+                .removeClass('status-2xx status-3xx status-4xx status-5xx')
+                .addClass(`status-${statusClass}xx`);
+
+            // Time and size
+            $('#responseTime').text(responseTime + 'ms');
+            const content = response.content || response.error || JSON.stringify(response);
+            $('#responseSize').text(formatBytes(content.length));
+
+            // Content
+            try {
+                const parsed = JSON.parse(content);
+                const formatted = JSON.stringify(parsed, null, 2);
+                $('#responseContent').text(formatted);
+                $('#responseContent').removeClass().addClass('language-json');
+            } catch (e) {
+                $('#responseContent').text(content);
+                $('#responseContent').removeClass().addClass('language-text');
+            }
+
+            hljs.highlightElement($('#responseContent')[0]);
+        }
+
+        // Send request
+        $('#sendBtn').on('click', function() {
+            const request = getCurrentRequest();
+
+            if (!request.url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            const $btn = $(this);
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Sending...');
+
+            const startTime = Date.now();
+
+            $.ajax({
+                url: '/make_request',
+                method: 'POST',
+                data: {
+                    url: request.url,
+                    method: request.method,
+                    headers: JSON.stringify(request.headers),
+                    body: request.body
+                },
+                success: function(response) {
+                    const responseTime = Date.now() - startTime;
+                    displayResponse(response, responseTime);
+
+                    // Add to history
+                    const history = getStorageData(STORAGE_KEYS.history);
+                    history.unshift(request);
+                    setStorageData(STORAGE_KEYS.history, history.slice(0, 50));
+                    renderHistory();
+                },
+                error: function(xhr, status, error) {
+                    displayResponse({
+                        status_code: xhr.status || 500,
+                        content: JSON.stringify({error: error || 'Request failed'}, null, 2)
+                    }, Date.now() - startTime);
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> Send Request');
+                }
             });
         });
+
+        // Save request
+        $('#saveBtn').on('click', function() {
+            const request = getCurrentRequest();
+            if (!request.url) {
+                alert('Please enter a URL first');
+                return;
+            }
+            $('#saveModal').modal('show');
+        });
+
+        $('#confirmSaveBtn').on('click', function() {
+            const name = $('#requestName').val().trim();
+            if (!name) {
+                alert('Please enter a name');
+                return;
+            }
+
+            const request = getCurrentRequest();
+            const collections = getStorageData(STORAGE_KEYS.collections);
+            collections.unshift({ name, request });
+            setStorageData(STORAGE_KEYS.collections, collections);
+            renderCollections();
+
+            $('#saveModal').modal('hide');
+            $('#requestName').val('');
+        });
+
+        // Clear form
+        $('#clearBtn').on('click', function() {
+            $('#url').val('');
+            $('#method').val('GET');
+            $('#headers').val('');
+            $('#body').val('');
+            $('#bearerToken').val('');
+            $('#basicUsername').val('');
+            $('#basicPassword').val('');
+            $('#apiKeyValue').val('');
+            $('#none-tab').tab('show');
+            $('#responseSection').hide();
+        });
+
+        // Copy response
+        $('#copyResponseBtn').on('click', function() {
+            const text = $('#responseContent').text();
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    const $btn = $(this);
+                    const originalHtml = $btn.html();
+                    $btn.html('<i class="fas fa-check"></i> Copied!');
+                    setTimeout(() => $btn.html(originalHtml), 2000);
+                })
+                .catch(err => alert('Failed to copy: ' + err));
+        });
+
+        // Clear history
+        $('#clearHistoryBtn').on('click', function() {
+            if (confirm('Clear all history?')) {
+                setStorageData(STORAGE_KEYS.history, []);
+                renderHistory();
+            }
+        });
+
+        // Clear collections
+        $('#clearCollectionsBtn').on('click', function() {
+            if (confirm('Clear all saved requests?')) {
+                setStorageData(STORAGE_KEYS.collections, []);
+                renderCollections();
+            }
+        });
+
+        // Save environment
+        $('#saveEnvBtn').on('click', function() {
+            const name = $('#envName').val().trim();
+            const varsText = $('#envVars').val().trim();
+
+            if (!name || !varsText) {
+                alert('Please enter both name and variables');
+                return;
+            }
+
+            try {
+                const variables = JSON.parse(varsText);
+                const environments = getStorageData(STORAGE_KEYS.environments);
+                environments.push({ name, variables });
+                setStorageData(STORAGE_KEYS.environments, environments);
+
+                $('#envName').val('');
+                $('#envVars').val('');
+                renderEnvironments();
+            } catch (e) {
+                alert('Invalid JSON in variables');
+            }
+        });
+
+        // Initialize
+        $(document).ready(function() {
+            renderHistory();
+            renderCollections();
+            renderEnvironments();
+        });
+        {% endraw %}
     </script>
 </body>
 </html>
